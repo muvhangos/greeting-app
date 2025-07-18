@@ -1,75 +1,154 @@
-<!DOCTYPE html>
+ {% load static %}
+ <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Two‑User Greeting App</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Greeting App</title>
   <style>
-    body { overflow: hidden; }
-    canvas.confetti {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 999;
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #f6f9ff, #e0eafc);
+      animation: glow 5s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { background-color: #e0eafc; }
+      to { background-color: #d0e0fc; }
+    }
+
+    .container {
+      text-align: center;
+      border: 2px solid #004080;
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #eef4ff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      margin: 5px;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    h1 {
+      color: #003366;
+    }
+
+    #conversation, #closeBtn {
+      display: none;
+    }
+
+    .designer {
+      font-size: 12px;
+      color: #666;
+      animation: zoomOut 1.5s ease-out;
+      opacity: 0;
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes zoomOut {
+      from {
+        transform: scale(2);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    p {
+      color: #333;
     }
   </style>
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 text-center bg-light">
-  <audio id="bgMusic" loop autoplay>
-    <source src="https://www.bensound.com/bensound-music/bensound-ukulele.mp3" type="audio/mp3">
-    Your browser does not support the audio element.
-  </audio>
-
-  <canvas id="confettiCanvas" class="confetti"></canvas>
-
-  <div class="container p-4 rounded shadow" style="max-width: 550px; background: #fff; border-radius: 12px;">
-    <h2 class="mb-3">🤖 Welcome to the Greeting App!</h2>
-    <p class="text-muted small fst-italic mb-4">Powered by the magic of JavaScript and sheer optimism.</p>
-
-    <input type="text" id="user1" class="form-control mb-3" placeholder="🦸 Enter name of User 1" />
-    <input type="text" id="user2" class="form-control mb-3" placeholder="🧙 Enter name of User 2" />
-    <button onclick="generateGreetings()" class="btn btn-primary mb-3 w-100">💬 Greet Each Other</button>
-
-    <div class="greeting text-muted fw-bold fs-5" id="greeting1"></div>
-    <div class="greeting text-muted fw-bold fs-5" id="greeting2"></div>
+<body>
+  <div class="container">
+    <h1>Welcome to the Greeting App!</h1>
+    <div class="designer">Designed by Samuel Muvhango</div>
+    <input type="text" id="user1" placeholder="Enter name of User 1" />
+    <input type="text" id="user2" placeholder="Enter name of User 2" />
+    <button id="startBtn">💬 Start Conversation</button>
+    <button id="closeBtn">❌ Close Conversation</button>
+    <div id="conversation">
+      <p id="output"></p>
+    </div>
+    <audio autoplay loop>
+      <source src="{% static 'greetingapp/music.mp3' %}" type="audio/mpeg">
+    </audio>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/confetti-js@0.0.18/dist/index.min.js"></script>
   <script>
-    const confettiSettings = { target: 'confettiCanvas' };
-    const confetti = new ConfettiGenerator(confettiSettings);
+    const startBtn = document.getElementById("startBtn");
+    const closeBtn = document.getElementById("closeBtn");
+    const conversationDiv = document.getElementById("conversation");
+    const output = document.getElementById("output");
+    const user1Input = document.getElementById("user1");
+    const user2Input = document.getElementById("user2");
 
-    const emojis = ['😄', '😎', '🥳', '🎉', '👾', '🌈', '🪄', '🚀'];
+    let step = 0;
+    const answers = {};
 
-    function randomEmoji() {
-      return emojis[Math.floor(Math.random() * emojis.length)];
-    }
+    const questions = [
+      "Where do you reside?",
+      "What car are you driving?",
+      "What is your favorite color?",
+      "What do you love most about life?"
+    ];
 
-    function generateGreetings() {
-      const user1 = document.getElementById("user1").value.trim();
-      const user2 = document.getElementById("user2").value.trim();
-      const greeting1El = document.getElementById("greeting1");
-      const greeting2El = document.getElementById("greeting2");
-
+    startBtn.addEventListener("click", () => {
+      const user1 = user1Input.value.trim();
+      const user2 = user2Input.value.trim();
       if (!user1 || !user2) {
-        greeting1El.textContent = "🤔 Please enter both names. Your users are feeling neglected.";
-        greeting2El.textContent = "";
+        alert("Please enter both names.");
         return;
       }
 
-      const hour = new Date().getHours();
-      const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+      answers.user1 = user1;
+      answers.user2 = user2;
 
-      greeting1El.innerHTML = `${randomEmoji()} <span class="wave">${greeting}, ${user1}!</span>`;
-      greeting2El.innerHTML = `${randomEmoji()} <span class="wave">${greeting}, ${user2}!</span>`;
+      user1Input.style.display = "none";
+      user2Input.style.display = "none";
+      startBtn.style.display = "none";
+      conversationDiv.style.display = "block";
+      closeBtn.style.display = "inline-block";
 
-      confetti.render();
+      output.innerHTML = `🌹 Hello ${answers.user2}!<br>🌹 Hello ${answers.user1}!<br><br>`;
+      askNextQuestion();
+    });
+
+    function askNextQuestion() {
+      if (step < questions.length) {
+        const q = questions[step];
+        const response = prompt(`${answers.user1}, ${q}`);
+        output.innerHTML += `${answers.user1}: ${response}<br>`;
+        const response2 = prompt(`${answers.user2}, ${q}`);
+        output.innerHTML += `${answers.user2}: ${response2}<br><br>`;
+        step++;
+        askNextQuestion();
+      } else {
+        output.innerHTML += "🌟 Thank you for chatting! 🌟";
+      }
     }
 
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') generateGreetings();
+    closeBtn.addEventListener("click", () => {
+      conversationDiv.style.display = "none";
+      closeBtn.style.display = "none";
+      user1Input.style.display = "inline-block";
+      user2Input.style.display = "inline-block";
+      user1Input.value = "";
+      user2Input.value = "";
+      startBtn.style.display = "inline-block";
+      startBtn.textContent = "💬 Start Conversation";
+      output.innerHTML = "";
+      step = 0;
     });
   </script>
 </body>
